@@ -38,11 +38,13 @@ class Shape(object):
     scale = 1.0
     label_font_size = 8
 
-    def __init__(self, label=None, line_color=None, difficult=False, paint_label=False):
+    def __init__(self, label=None, line_color=None, truncated = False, occluded = False, difficult=False, paint_label=False):
         self.label = label
         self.points = []
         self.fill = False
         self.selected = False
+        self.truncated = truncated
+        self.occluded = occluded
         self.difficult = difficult
         self.paint_label = paint_label
 
@@ -196,6 +198,9 @@ class Shape(object):
             shape.line_color = self.line_color
         if self.fill_color != Shape.fill_color:
             shape.fill_color = self.fill_color
+        
+        shape.truncated = self.truncated
+        shape.occluded = self.occluded
         shape.difficult = self.difficult
         return shape
 

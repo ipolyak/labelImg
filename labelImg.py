@@ -135,6 +135,20 @@ class MainWindow(QMainWindow, WindowMixin):
         use_default_label_qhbox_layout.addWidget(self.default_label_combo_box)
         use_default_label_container = QWidget()
         use_default_label_container.setLayout(use_default_label_qhbox_layout)
+        
+        # Create a widget for edit and truncated button
+        self.truncated_button = QCheckBox(get_str('useTruncated'))
+        self.truncated_button.setChecked(False)
+        self.truncated_button.stateChanged.connect(self.button_state)
+        self.truncated_button = QToolButton()
+        self.truncated_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        
+        # Create a widget for edit and occluded button
+        self.occluded_button = QCheckBox(get_str('useOccluded'))
+        self.occluded_button.setChecked(False)
+        self.occluded_button.stateChanged.connect(self.button_state)
+        self.occluded_button = QToolButton()
+        self.occluded_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Create a widget for edit and diffc button
         self.diffc_button = QCheckBox(get_str('useDifficult'))
@@ -145,6 +159,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Add some of widgets to list_layout
         list_layout.addWidget(self.edit_button)
+        list_layout.addWidget(self.truncated_button)
+        list_layout.addWidget(self.occluded_button)
         list_layout.addWidget(self.diffc_button)
         list_layout.addWidget(use_default_label_container)
 
@@ -472,6 +488,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.zoom_level = 100
         self.fit_window = False
         # Add Chris
+        self.truncated = False
+        self.occluded = False
         self.difficult = False
 
         # Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
@@ -505,6 +523,8 @@ class MainWindow(QMainWindow, WindowMixin):
         Shape.fill_color = self.fill_color = QColor(settings.get(SETTING_FILL_COLOR, DEFAULT_FILL_COLOR))
         self.canvas.set_drawing_color(self.line_color)
         # Add chris
+        Shape.truncated = self.truncated
+        Shape.occluded = self.occluded
         Shape.difficult = self.difficult
 
         def xbool(x):
@@ -780,13 +800,36 @@ class MainWindow(QMainWindow, WindowMixin):
         if not item:  # If not selected Item, take the first one
             item = self.label_list.item(self.label_list.count() - 1)
 
+        truncated = self.trunc_button.isChecked()
+        occluded = self.occl_button.isChecked()
         difficult = self.diffc_button.isChecked()
 
         try:
             shape = self.items_to_shapes[item]
         except:
             pass
-        # Checked and Update
+            
+        # Checked and Update 1
+        try:
+            if truncated != shape.truncated:
+                shape.truncated = truncated
+                self.set_dirty()
+            else:  # User probably changed item visibility
+                self.canvas.set_shape_visible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+            
+        # Checked and Update 2
+        try:
+            if occluded != shape.occluded:
+                shape.occluded = occluded
+                self.set_dirty()
+            else:  # User probably changed item visibility
+                self.canvas.set_shape_visible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+            
+        # Checked and Update 3
         try:
             if difficult != shape.difficult:
                 shape.difficult = difficult
@@ -976,6 +1019,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Add Chris
         self.diffc_button.setChecked(False)
+        self.truncated_button.setChecked(False)
+        self.occluded_button.setChecked(False)
         if text is not None:
             self.prev_label_text = text
             generate_color = generate_color_by_text(text)

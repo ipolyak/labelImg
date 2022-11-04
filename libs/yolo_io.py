@@ -19,9 +19,11 @@ class YOLOWriter:
         self.local_img_path = local_img_path
         self.verified = False
 
-    def add_bnd_box(self, x_min, y_min, x_max, y_max, name, difficult):
+    def add_bnd_box(self, x_min, y_min, x_max, y_max, name, truncated, occluded, difficult):
         bnd_box = {'xmin': x_min, 'ymin': y_min, 'xmax': x_max, 'ymax': y_max}
         bnd_box['name'] = name
+        bnd_box['truncated'] = truncated
+        bnd_box['occluded'] = occluded
         bnd_box['difficult'] = difficult
         self.box_list.append(bnd_box)
 
@@ -82,7 +84,7 @@ class YoloReader:
 
     def __init__(self, file_path, image, class_list_path=None):
         # shapes type:
-        # [labbel, [(x1,y1), (x2,y2), (x3,y3), (x4,y4)], color, color, difficult]
+        # [labbel, [(x1,y1), (x2,y2), (x3,y3), (x4,y4)], color, color, truncated, occluded, difficult]
         self.shapes = []
         self.file_path = file_path
 
@@ -113,10 +115,10 @@ class YoloReader:
     def get_shapes(self):
         return self.shapes
 
-    def add_shape(self, label, x_min, y_min, x_max, y_max, difficult):
+    def add_shape(self, label, x_min, y_min, x_max, y_max, truncated, occluded, difficult):
 
         points = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
-        self.shapes.append((label, points, None, None, difficult))
+        self.shapes.append((label, points, None, None, truncated, occluded, difficult))
 
     def yolo_line_to_shape(self, class_index, x_center, y_center, w, h):
         label = self.classes[int(class_index)]
@@ -139,5 +141,5 @@ class YoloReader:
             class_index, x_center, y_center, w, h = bndBox.strip().split(' ')
             label, x_min, y_min, x_max, y_max = self.yolo_line_to_shape(class_index, x_center, y_center, w, h)
 
-            # Caveat: difficult flag is discarded when saved as yolo format.
-            self.add_shape(label, x_min, y_min, x_max, y_max, False)
+            # Caveat: truncated occluded difficult flags is discarded when saved as yolo format.
+            self.add_shape(label, x_min, y_min, x_max, y_max, False, False, False)
