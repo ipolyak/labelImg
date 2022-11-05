@@ -8,6 +8,7 @@ except ImportError:
 
 import os.path
 from enum import Enum
+#import Enum
 
 from libs.create_ml_io import CreateMLWriter
 from libs.pascal_voc_io import PascalVocWriter

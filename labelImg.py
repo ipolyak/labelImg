@@ -139,21 +139,17 @@ class MainWindow(QMainWindow, WindowMixin):
         # Create a widget for edit and truncated button
         self.truncated_button = QCheckBox(get_str('useTruncated'))
         self.truncated_button.setChecked(False)
-        self.truncated_button.stateChanged.connect(self.button_state)
-        self.truncated_button = QToolButton()
-        self.truncated_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.truncated_button.stateChanged.connect(self.button_state_truncated)
         
         # Create a widget for edit and occluded button
         self.occluded_button = QCheckBox(get_str('useOccluded'))
         self.occluded_button.setChecked(False)
-        self.occluded_button.stateChanged.connect(self.button_state)
-        self.occluded_button = QToolButton()
-        self.occluded_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.occluded_button.stateChanged.connect(self.button_state_occluded)
 
         # Create a widget for edit and diffc button
         self.diffc_button = QCheckBox(get_str('useDifficult'))
         self.diffc_button.setChecked(False)
-        self.diffc_button.stateChanged.connect(self.button_state)
+        self.diffc_button.stateChanged.connect(self.button_state_difficult)
         self.edit_button = QToolButton()
         self.edit_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
@@ -790,8 +786,8 @@ class MainWindow(QMainWindow, WindowMixin):
             self.load_file(filename)
 
     # Add chris
-    def button_state(self, item=None):
-        """ Function to handle difficult examples
+    def button_state_truncated(self, item=None):
+        """ Function to handle truncated examples
         Update on each object """
         if not self.canvas.editing():
             return
@@ -800,9 +796,7 @@ class MainWindow(QMainWindow, WindowMixin):
         if not item:  # If not selected Item, take the first one
             item = self.label_list.item(self.label_list.count() - 1)
 
-        truncated = self.trunc_button.isChecked()
-        occluded = self.occl_button.isChecked()
-        difficult = self.diffc_button.isChecked()
+        truncated = self.truncated_button.isChecked()
 
         try:
             shape = self.items_to_shapes[item]
@@ -818,6 +812,23 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.canvas.set_shape_visible(shape, item.checkState() == Qt.Checked)
         except:
             pass
+
+    def button_state_occluded(self, item=None):
+        """ Function to handle occluded examples
+        Update on each object """
+        if not self.canvas.editing():
+            return
+
+        item = self.current_item()
+        if not item:  # If not selected Item, take the first one
+            item = self.label_list.item(self.label_list.count() - 1)
+
+        occluded = self.occluded_button.isChecked()
+
+        try:
+            shape = self.items_to_shapes[item]
+        except:
+            pass
             
         # Checked and Update 2
         try:
@@ -826,6 +837,23 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.set_dirty()
             else:  # User probably changed item visibility
                 self.canvas.set_shape_visible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+
+    def button_state_difficult(self, item=None):
+        """ Function to handle difficult examples
+        Update on each object """
+        if not self.canvas.editing():
+            return
+
+        item = self.current_item()
+        if not item:  # If not selected Item, take the first one
+            item = self.label_list.item(self.label_list.count() - 1)
+
+        difficult = self.diffc_button.isChecked()
+
+        try:
+            shape = self.items_to_shapes[item]
         except:
             pass
             
@@ -880,7 +908,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def load_labels(self, shapes):
         s = []
-        for label, points, line_color, fill_color, difficult in shapes:
+        for label, points, line_color, fill_color, truncated, occluded, difficult in shapes:
             shape = Shape(label=label)
             for x, y in points:
 
@@ -890,6 +918,8 @@ class MainWindow(QMainWindow, WindowMixin):
                     self.set_dirty()
 
                 shape.add_point(QPointF(x, y))
+            shape.truncated = truncated
+            shape.occluded = occluded
             shape.difficult = difficult
             shape.close()
             s.append(shape)
@@ -931,6 +961,8 @@ class MainWindow(QMainWindow, WindowMixin):
                         fill_color=s.fill_color.getRgb(),
                         points=[(p.x(), p.y()) for p in s.points],
                         # add chris
+                        truncated=s.truncated,
+                        occluded=s.occluded,
                         difficult=s.difficult)
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
@@ -985,6 +1017,8 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.select_shape(self.items_to_shapes[item])
             shape = self.items_to_shapes[item]
             # Add Chris
+            self.truncated_button.setChecked(shape.truncated)
+            self.occluded_button.setChecked(shape.occluded)
             self.diffc_button.setChecked(shape.difficult)
 
     def label_item_changed(self, item):
@@ -1018,9 +1052,9 @@ class MainWindow(QMainWindow, WindowMixin):
             text = self.default_label
 
         # Add Chris
-        self.diffc_button.setChecked(False)
         self.truncated_button.setChecked(False)
         self.occluded_button.setChecked(False)
+        self.diffc_button.setChecked(False)
         if text is not None:
             self.prev_label_text = text
             generate_color = generate_color_by_text(text)
