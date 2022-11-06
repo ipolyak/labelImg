@@ -79,6 +79,7 @@ class PascalVocWriter:
 
     def add_bnd_box(self, x_min, y_min, x_max, y_max, name, truncated, occluded, difficult):
         bnd_box = {'xmin': x_min, 'ymin': y_min, 'xmax': x_max, 'ymax': y_max}
+        bnd_box['id'] = 0
         bnd_box['name'] = name
         bnd_box['truncated'] = truncated
         bnd_box['occluded'] = occluded
@@ -88,6 +89,8 @@ class PascalVocWriter:
     def append_objects(self, top):
         for each_object in self.box_list:
             object_item = SubElement(top, 'object')
+            idd = SubElement(object_item, 'id')
+            idd.text = "0"
             name = SubElement(object_item, 'name')
             name.text = ustr(each_object['name'])
             pose = SubElement(object_item, 'pose')
